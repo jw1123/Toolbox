@@ -21,9 +21,9 @@ class Distance:
         distance_feat = db.distance_feat
         self.so = song_features
         self.di = distance_feat
-        self.iter()          
+        self.iterating()          
 
-    def iter(self):
+    def iterating(self):
         s = self.so.find(timeout=False) #.skip(1)
         r = self.so.find(timeout=False) #.skip(1)
         j = 1
@@ -50,27 +50,33 @@ class Distance:
         print "Distance calculation successfully completed!"
 
     def dist(self,p,q):
+        # Determine which list is longer and invoking the reshaping function
+        # to even their length (otherwise we cannot compare their values)
         if len(p) > len(q):
-            d = self.reshap(p,q)
+            d = self.reshape(p,q)
             return d
         elif len(p) < len(q):
-            d = self.reshap(q,p)
+            d = self.reshape(q,p)
             return d
         elif len(p) == len(q):
-            d = self.calc(p,q)
+            d = self.eucl_distance(p,q)
             return d
         else:
             return "unknown"
         
 
-    def reshap(self,p,q):
-            x = len(p)/len(q)
-            qi = int(x)*q
-            q1 = qi + qi[0:len(p)-len(qi)]
-            return self.calc(p,q1)
+    def reshape(self,p,q):
+        # Multiply the shorter list with the smallest integer
+        # to approach equal length
+        x = len(p)/len(q)
+        qi = int(x)*q
+        # Add the remaining length of the list
+        q1 = qi + qi[0:len(p)-len(qi)]
+        return self.eucl_distance(p,q1)
 
-    def calc(self,p,q):
+    def eucl_distance(self,p,q):
         c = 0
+        # Calculation of euclidean distance
         if len(p) == len(q):
             for i in arange(len(p)):
                 c += (p[i]-q[i])*(p[i]-q[i])

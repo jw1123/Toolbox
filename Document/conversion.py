@@ -11,8 +11,8 @@ class Conversion():
 
         print "CONVERSION"
 
-        input_path = "/Users/jonathan/Documents/DesktopiMac/"
-        output_path = "/Users/jonathan/Documents/DesktopiMac"
+        input_path = "/Users/jonathan/Documents/DesktopiMac/" #Change the input path
+        output_path = "/Users/jonathan/Documents/DesktopiMac"#Change the output path
 
         if a == "-cmp3":
             self.mp3_to_wave(input_path,output_path)
@@ -37,6 +37,8 @@ class Conversion():
                 if fil[len(fil)-3:len(fil)] == "mp3":
                     a = 0
                     tag = ID3(inp+fil)
+                    # Testing if there is a year-tag, to avoid error due to
+                    # incorrect key value
                     try:
                         b = tag["TDRC"]
                         a = 1
