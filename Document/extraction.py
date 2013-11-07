@@ -73,7 +73,7 @@ class Extraction:
         da.close()
 
 
-    def bpm(self,path,param):
+    def BPM(self,path,param):
         """ Calculate the beats per minute (bpm) as a rhythm feature.
             path: path to the file
             param: dictionary of parameters
@@ -125,7 +125,7 @@ class Extraction:
 
 
 
-    def wind(self,feat,fil):
+    def window_sampling(self,feat,fil):
         """ Window sampling function.
             feat: list of feature values
             fil: filter/reduction value
@@ -151,7 +151,7 @@ class Extraction:
         return b
 
 
-    def extract_feat(self,x,para):
+    def extract_features(self,x,para):
         """ Extract all features and reducing them invoking the wind function.
             x: path to the file
             para: list of parameter dictionaries
@@ -168,24 +168,24 @@ class Extraction:
                     # Extraction with default values
                     fea_dic.update({f:self.features_list[f](x)})
             else:
-                fea_dic.update({f:self.bpm(x,para[i])})
+                fea_dic.update({f:self.BPM(x,para[i])})
 
             i += 1
         fea_dic1 = {}
         # Reduce the size of the feature matrix and convert them to lists
         for fe in fea_dic:
             if 'Chromagram' in fe:
-                fea_dic1.update({fe:self.wind(fea_dic[fe].CHROMA,50)})
+                fea_dic1.update({fe:self.window_sampling(fea_dic[fe].CHROMA,50)})
             elif fe == 'MelFrequencyCepstrum (MFCC)':
-                fea_dic1.update({fe:self.wind(fea_dic[fe].MFCC,100)})
+                fea_dic1.update({fe:self.window_sampling(fea_dic[fe].MFCC,100)})
             elif 'LinearFrequencySpectrum' in fe: 
-                fea_dic1.update({fe:self.wind(fea_dic[fe].STFT,50)})
+                fea_dic1.update({fe:self.window_sampling(fea_dic[fe].STFT,50)})
             elif fe == 'LinearPower' or fe == 'RMS' or fe == 'dBPower':
-                fea_dic1.update({fe:self.wind(fea_dic[fe].POWER,10)})
+                fea_dic1.update({fe:self.window_sampling(fea_dic[fe].POWER,10)})
             elif fe == 'BPM':
                 fea_dic1.update({fe:fea_dic[fe]})
             else:
-                fea_dic1.update({fe:self.wind(fea_dic[fe].CQFT,50)})
+                fea_dic1.update({fe:self.window_sampling(fea_dic[fe].CQFT,50)})
         return fea_dic1
 
 
@@ -209,7 +209,7 @@ class Extraction:
                     # Split the file name in order to use all the metadata
                     meta = file1.split("-*-")
                     # Launch the actual extraction
-                    features_dict = self.extract_feat(direc+file1,param)
+                    features_dict = self.extract_features(direc+file1,param)
 
                     dbfeat = {}
                     j = 0

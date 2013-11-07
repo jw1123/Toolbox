@@ -16,9 +16,9 @@ class Distance:
             call(["osascript", "-e", 'tell app "Terminal" to do script "mongod"'])
             sleep(2)
             con = Connection()
-        db = con.extraction_test
-        song_features = db.song_features
-        distance_feat = db.distance_feat
+        db = con.extraction_test #Change the database
+        song_features = db.song_features #Change the name of the song collection
+        distance_feat = db.distance_feat #Change the name of the distance collection
         self.so = song_features
         self.di = distance_feat
         self.iterating()          
@@ -30,19 +30,19 @@ class Distance:
         for song1 in s:
             for song2 in r:
                 if song2['id'] > song1['id']:
-                    distances = {}
+                    distance_dict = {}
                     summe, dd, ii = 0, 0, 0
                     for i in song1['features']:
                         for h in song1['features'][i]:
                             dd = self.dist(song1['features'][i][h],song2['features'][i][h])
-                            distances.update({i:{h:dd}})
+                            distance_dict.update({i:{h:dd}})
                             summe +=dd
                             ii += 1
                     self.di.insert({
                     'idd': j,
                     'source':[song1['id'],song1['metadata']['title']],
                     'target':[song2['id'],song2['metadata']['title']],
-                    'feature_distance': distances,
+                    'feature_distance': distance_dict,
                     'total':summe/ii
                     })
                     j += 1

@@ -19,4 +19,4 @@ if __name__ == "__main__":
     elif y == "-d":
         d = Distance()
     else:
-        print "There is no %r option, please try again." %(y)
+        print "There is no %r option. Try -cmp3 -cm4a -e or -d." %(y)
