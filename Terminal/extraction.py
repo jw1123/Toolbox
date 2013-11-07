@@ -112,16 +112,17 @@ class Extraction:
             print dic_feat[fe], ": "
             while (a != 'f'):
                 a = raw_input("Parameter: ")
-                b = raw_input("Value: ")
-                try:
-                    c = int(b)
-                except:
-                    if b == "True":
-                        c = True
-                    else:
-                        c = False
-                if a != 'f' and b != 'f':
-                    param_dict.update({a:c})
+                if a !=f:
+                    b = raw_input("Value: ")
+                    try:
+                        c = int(b)
+                    except:
+                        if b == "True":
+                            c = True
+                        else:
+                            c = False
+                    if a != 'f' and b != 'f':
+                        param_dict.update({a:c})
             param_list.append(param_dict)
 
         self.extract(param_list)
