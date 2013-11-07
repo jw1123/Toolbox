@@ -1,0 +1,4 @@
+
+Features--Chromagram--LinearPower--MelFrequencyCepstrum--BPM
+Parameters--sample_rate:22000-nbpo:6--skip--skip--sample_rate:11000
+Parameters--sample_rate:22000-nbpo:6--sample_rate:22000-hi:14000--sample_rate:22000--skip
