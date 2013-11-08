@@ -1,0 +1,2 @@
+Features--RMS--LogFrequencySpectrum
+Parameters--sample_rate:22000-hi:13000--skip

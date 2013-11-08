@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     if "-c" in y:
         c = Conversion(y)
-    elif y == "-e":
-        e = Extraction()
+    elif "-e" in y:
+        e = Extraction(y)
     elif y == "-d":
         d = Distance()
     else:
