@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import linalg, array, arange, sqrt
+from numpy import linalg, array, arange, sqrt, concatenate
 from subprocess import call
 from pymongo import Connection
 from cPickle import loads as ploads
@@ -35,7 +35,7 @@ class Distance:
                 if song2['id'] > song1['id']:
                     distance_dict = {}
                     summe, dd, ii = 0, 0, 0
-                    l = song1['metadata']['length']+song2['metadata']['length']
+                    l = max(song1['metadata']['length'],song2['metadata']['length'])
                     for i in song1['features']:
                         try:
                             ji = 0
@@ -77,7 +77,6 @@ class Distance:
                     'feature_distance': distance_dict,
                     'total':summe/ii
                     })
-                    print j
                     j += 1
             r.rewind()
         print "Distance calculation successfully completed!"
@@ -85,42 +84,36 @@ class Distance:
     def dist(self,p,q):
         # Determine which list is longer and invoking the reshaping function
         # to even their length (otherwise we cannot compare their values)
-        if type(p) == float and type(q) == float:
-            return abs(p-q)
-        elif p.shape > q.shape:
+
+        if p.shape > q.shape:
             d = self.reshape(p,q)
             return d
         elif p.shape < q.shape:
             d = self.reshape(q,p)
             return d
+        elif type(p) == float and type(q) == float:
+            return abs(p-q)
         elif p.shape == q.shape:
             d = linalg.norm(p-q)
             return d
         else:
             return "unknown"
         
+    def reshape(self,b,a):
+        x = b.shape[1]
 
-    def reshape(self,p,q):
-        y1, z1 = [], []
-        y = p.tolist()
-        z = q.tolist()
-        try:
-            for i in y:
-                y1 += i
-            for j in z:
-                z1 += j
-        except:
-            y1 = y
-            z1 = z
+        l = int(x/a.shape[1])
+        template = array([])
+        new_array = []
 
-        # Multiply the shorter list with the smallest integer
-        # to approach equal length
-        x = len(y1)/len(z1)
-        z2 = int(x)*z1
-        # Add the remaining length of the list
-        z3 = z2 + z2[0:len(y1)-len(z2)]
-        z4 = array(z3).reshape(p.shape)
-        return linalg.norm(p-z4)
+        for i in a:
+            template = i
+            for j in arange(l-1):
+                template = concatenate([templa,i])
+            template = concatenate([templa,i[:len(templa)-x]])
+            new_array.append(templa)
+
+        return linalg.norm(b-array(new_array))
 
 
 
