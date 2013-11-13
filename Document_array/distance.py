@@ -53,7 +53,7 @@ class Distance:
                                     distance_dict[i].update({h:dd})
                                 ji += 1
                         except:
-                            jii = 0  
+                            jii = 0
                             for h in song1['features'][i][0]:
                                 try:
                                     a = ploads(song1['features'][i][0][h])
@@ -85,14 +85,14 @@ class Distance:
         # Determine which list is longer and invoking the reshaping function
         # to even their length (otherwise we cannot compare their values)
 
-        if p.shape > q.shape:
+        if type(p) == float and type(q) == float:
+            return abs(p-q)
+        elif p.shape > q.shape:
             d = self.reshape(p,q)
             return d
         elif p.shape < q.shape:
             d = self.reshape(q,p)
             return d
-        elif type(p) == float and type(q) == float:
-            return abs(p-q)
         elif p.shape == q.shape:
             d = linalg.norm(p-q)
             return d
@@ -100,18 +100,25 @@ class Distance:
             return "unknown"
         
     def reshape(self,b,a):
-        x = b.shape[1]
-
-        l = int(x/a.shape[1])
         template = array([])
         new_array = []
 
-        for i in a:
-            template = i
-            for j in arange(l-1):
-                template = concatenate([templa,i])
-            template = concatenate([templa,i[:len(templa)-x]])
-            new_array.append(templa)
+        if b.shape[0] == a.shape[0]:
+            x = b.shape[1]
+            l = int(x/a.shape[1])
+            for i in a:
+                template = i
+                for j in arange(l-1):
+                    template = concatenate([template,i])
+                template = concatenate([template,i[:x-len(template)]])
+                new_array.append(template)
+        else:
+            x = b.shape[0]
+            l = int(x/a.shape[0])
+            for j in arange(l):
+                template = concatenate([template,a])
+            template = concatenate([template,a[:x-len(template)]])
+            new_array.append(template)
 
         return linalg.norm(b-array(new_array))
 

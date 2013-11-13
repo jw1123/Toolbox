@@ -42,7 +42,7 @@ class Extraction:
         #__________________________________________________________
         self.so = song_test
         #_________________________________________________________________
-        path_data = '/Users/jonathan/Documents/Toolbox/Document/data.txt' #replace with path to document ######REPLACE#######
+        path_data = '/Users/jonathan/Documents/Toolbox/Document_array/data1.txt' #replace with path to document ######REPLACE#######
         path_wave = '/Users/jonathan/Documents/DesktopiMac/WAVE/files/' #replace with path to wave files #######REPLACE#######
         #_________________________________________________________________
         da = open(path_data,'r')
@@ -155,9 +155,9 @@ class Extraction:
         # Convert the numpy arrays into binaries to store them in MongoDB
         for fe in fea_dic:
             if 'Chromagram' in fe:
-                fea_dic1.update({fe:Binary(dumps(fea_dic[fe].CHROMA, protocol=2))})
+                 fea_dic1.update({fe:Binary(dumps(fea_dic[fe].CHROMA, protocol=2))})
             elif fe == 'MelFrequencyCepstrum (MFCC)':
-                fea_dic1.update({fe:Binary(dumps(fea_dic[fe].MFCC, protocol=2))})
+                 fea_dic1.update({fe:Binary(dumps(fea_dic[fe].MFCC, protocol=2))})
             elif 'LinearFrequencySpectrum' in fe: 
                 fea_dic1.update({fe:Binary(dumps(fea_dic[fe].STFT, protocol=2))})
             elif fe == 'LinearPower' or fe == 'RMS' or fe == 'dBPower':
@@ -200,7 +200,6 @@ class Extraction:
             for file1 in files:
                 if file1[len(file1)-3:] == "wav":
                     i += 1
-                    print i
                     w = wopen(direc+file1,"r")
                     # Exracting the file length
                     with closing(w) as f:
@@ -251,8 +250,9 @@ class Extraction:
                         'features': dbfeat,
                         })
                     w.close()
+                    print i
 
-        print " Extraction successfully completed!"
+        print "Extraction successfully completed!"
 
 
 
@@ -265,13 +265,13 @@ class Extraction:
                 if file1[len(file1)-3:] == "wav":
                     features_dict = {}
                     ii = 0
-                    print "*",
                     for x in self.parameters_list:
                         features_dict.update({ii:self.extract_features(direc+file1,x)})
                         ii += 1
                     dbfeat = self.parameter_name(features_dict)
                     meta = file1.split("-*-")
                     song_feature_dic.update({meta[0]+meta[1]+meta[2]:dbfeat})
+                    print "*"
 
         s = self.so.find()
         for song in s:
@@ -281,8 +281,7 @@ class Extraction:
                 self.so.update({"metadata.title":song["metadata"]["title"],"metadata.artist":song["metadata"]["artist"],\
                     "metadata.album":song["metadata"]["album"]},{"$addToSet":{a:x[i]}})
 
-
-        print " Extraction successfully completed!"
+        print "Extraction successfully completed!"
 
 
 
