@@ -4,7 +4,6 @@
 from numpy import linalg, array, arange, sqrt, concatenate
 from subprocess import call
 from pymongo import Connection
-from cPickle import loads as ploads
 
 class Distance:
 
@@ -24,60 +23,46 @@ class Distance:
         #__________________________________________________________________________
         self.so = song_test
         self.di = distance_feat
-        self.iterating()
+
 
     def iterating(self):
-        s = self.so.find(timeout=False) #.skip(1)
-        r = self.so.find(timeout=False) #.skip(1)
+        s = self.so.find(timeout=False).sort("id")
+        r = self.so.find(timeout=False).sort("id")
+        ski = 1
         j = 1
         for song1 in s:
+            r.skip(ski)
             for song2 in r:
-                if song2['id'] > song1['id']:
-                    distance_dict = {}
-                    summe, dd, ii = 0, 0, 0
-                    l = max(song1['metadata']['length'],song2['metadata']['length'])
-                    for i in song1['features']:
-                        try:
-                            ji = 0
-                            for h in song1['features'][i]:
-                                try:
-                                    a = ploads(song1['features'][i][h])
-                                    b = ploads(song2['features'][i][h])
-                                except:
-                                    a = song1['features'][i][h]
-                                    b = song2['features'][i][h]                              
-                                dd = self.dist(a,b)/l
-                                if ji == 0:
-                                    distance_dict.update({i:{h:dd}})
-                                else:
-                                    distance_dict[i].update({h:dd})
-                                ji += 1
-                        except:
-                            jii = 0
-                            for h in song1['features'][i][0]:
-                                try:
-                                    a = ploads(song1['features'][i][0][h])
-                                    b = ploads(song2['features'][i][0][h])
-                                except:
-                                    a = song1['features'][i][0][h]
-                                    b = song2['features'][i][0][h] 
-                                dd = self.dist(a,b)/l
-                                if jii == 0:
-                                    distance_dict.update({i:{h:dd}})
-                                else:
-                                    distance_dict[i].update({h:dd})
-                                jii += 1
-                        summe +=dd
-                        ii += 1
+                distance_dict = {}
+                summe, dd, ii = 0, 0, 0
+                l = max(song1['metadata']['length'],song2['metadata']['length'])
+                for i in song1['features']:
+                    jii = 0
+                    for h in song1['features'][i][0]:
+                        if type(song1['features'][i][0][h]) == float:
+                            a = song1['features'][i][0][h]
+                            b = song2['features'][i][0][h]
+                        else:
+                            a = ploads(song1['features'][i][0][h])
+                            b = ploads(song2['features'][i][0][h])
+                        dd = self.dist(a,b)/l
+                        if jii == 0:
+                            distance_dict.update({i:{h:dd}})
+                        else:
+                            distance_dict[i].update({h:dd})
+                        jii += 1
+                    summe +=dd
+                    ii += 1
 
-                    self.di.insert({
-                    'idd': j,
-                    'source':[song1['id'],song1['metadata']['title']],
-                    'target':[song2['id'],song2['metadata']['title']],
+                self.di.insert({
+                    'distance_id': j,
+                    'source':[song1['song_id'],song1['metadata']['title']],
+                    'target':[song2['song_id'],song2['metadata']['title']],
                     'feature_distance': distance_dict,
-                    'total':summe/ii
+                    'weight':summe/ii
                     })
-                    j += 1
+                j += 1
+            ski += 1
             r.rewind()
         print "Distance calculation successfully completed!"
 

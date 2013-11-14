@@ -28,9 +28,9 @@ class Neighbour:
         f = open(pa[:len(pa)-len("neighbour.py")] + "test/test.txt",'w') 
 
         for song in s:
-            mini, maxi = self.minmax(song['id'],d,3)
+            mini, maxi = self.minmax(song['song_id'],d,3)
             d.rewind()
-            self.write_neighbours(song['id'],mini,maxi,f)
+            self.write_neighbours(song['song_id'],mini,maxi,f)
         f.close()
 
 
@@ -42,9 +42,9 @@ class Neighbour:
 
         for dis in d:
             if dis['source'][0] == _id_:
-                a.update({dis['target'][0]:dis['total']})
+                a.update({dis['target'][0]:dis['weight']})
             elif dis['target'][0] == _id_:
-                a.update({dis['source'][0]:dis['total']})
+                a.update({dis['source'][0]:dis['weight']})
 
         for i in arange(numb):
             id_minim = min(a, key=a.get)
@@ -68,8 +68,8 @@ class Neighbour:
         s = db.song_test.find()
 
         for song in s:
-            if song['id'] == _id_:
-                a = ("Source id : " + str(song['id']) + " --- Titel: " + song['metadata']['title'] +\
+            if song['song_id'] == _id_:
+                a = ("Source id : " + str(song['song_id']) + " --- Titel: " + song['metadata']['title'] +\
                  " --- Artist: " + song['metadata']['artist'] + " --- Genre: " + song['metadata']['genre']).encode('utf-8')
                 f.write(len(a)*"*"+"\n")
                 f.write(a+"\n")
@@ -79,7 +79,7 @@ class Neighbour:
         f.write("_________________________"+"\n")
         for son in s:
             for id_ in mi:
-                if son['id'] == id_:
+                if son['song_id'] == id_:
                     f.write("Distance: " + str(mi[id_]) + "  " + son['metadata']['title'].encode('utf-8') + "\n")
         f.write("_________________________"+"\n")
         s.rewind()
@@ -87,7 +87,7 @@ class Neighbour:
         f.write("_________________________"+"\n")
         for so in s:
             for id_ in ma:
-                if so['id'] == id_:
+                if so['song_id'] == id_:
                     f.write("Distance: " + str(ma[id_]) + "  " + so['metadata']['title'].encode('utf-8') + "\n")
         f.write("_________________________"+"\n")
         f.write("\n")

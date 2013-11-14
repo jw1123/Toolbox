@@ -7,18 +7,19 @@ from subprocess import call, STDOUT, PIPE
 
 class Conversion():
 
-    def __init__(self, a):
+    def __init__(self, a, path):
 
         print "CONVERSION"
 
         #____________________________________________________
-        input_path = "/Users/jonathan/Documents/DesktopiMac/" #Change the input path ######REPLACE#######
-        output_path = "/Users/jonathan/Documents/DesktopiMac" #Change the output path ######REPLACE#######
+        input_path = path #Change the input path ######REPLACE#######
+        call(["mkdir", path + "wave/"])
+        output_path = path + "wave/" #Change the output path ######REPLACE#######
         #____________________________________________________
 
-        if a == "-cmp3":
+        if a == "mp3":
             self.mp3_to_wave(input_path, output_path)
-        elif a == "-cm4a":
+        elif a == "m4a":
             self.m4a_to_mp3(input_path, output_path)
 
 

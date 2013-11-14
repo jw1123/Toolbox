@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from os import walk
+from os import walk, path
 from time import sleep
 from bregman.suite import os, Chromagram, HighQuefrencyChromagram, HighQuefrencyLogFrequencySpectrum, HighQuefrencyMelSpectrum, LinearFrequencySpectrum,\
 LinearFrequencySpectrumCentroid, LinearFrequencySpectrumSpread, LinearPower, LogFrequencySpectrum, LogFrequencySpectrumCentroid, LogFrequencySpectrumSpread,\
@@ -9,16 +9,15 @@ LowQuefrencyLogFrequencySpectrum, LowQuefrencyMelSpectrum, MelFrequencyCepstrum,
 from contextlib import closing
 from wave import open as wopen
 from numpy import arange, median, mean
+from numpy import sum as npsum
 from subprocess import call
 from pymongo import Connection
 from aubio import tempo, source
-from cPickle import dumps
-from bson.binary import Binary
 #from numpy.lib.stride_tricks import as_strided as ast
 
 class Extraction:
 
-    def __init__(self,y):
+    def __init__(self,y,path_w):
         print "EXTRACTION"
         # List of all the features that can be extracted so that they can be used as functions
         self.features_list = {'Chromagram':Chromagram,'HighQuefrencyChromagram':HighQuefrencyChromagram,'HighQuefrencyLogFrequencySpectrum':HighQuefrencyLogFrequencySpectrum,\
@@ -42,8 +41,9 @@ class Extraction:
         #__________________________________________________________
         self.so = song_test
         #_________________________________________________________________
-        path_data = '/Users/jonathan/Documents/Toolbox/Document_array/data1.txt' #replace with path to document ######REPLACE#######
-        path_wave = '/Users/jonathan/Documents/DesktopiMac/WAVE/files/' #replace with path to wave files #######REPLACE#######
+
+        path_data = path.dirname(path.realpath("data.txt")) + "/data.txt"
+        path_wave = path_w #replace with path to wave files #######REPLACE#######
         #_________________________________________________________________
         da = open(path_data,'r')
 
@@ -71,10 +71,12 @@ class Extraction:
                 # In case there are several parameter-runs, append the parameters into a list (one append = one run, for the same features)
                 self.parameters_list.append(parameters)
 
-        if y == "-enew":
+        if y == "new":
             self.extract_new(path_wave)
-        elif y == "-eadd":
+        elif y == "add":
             self.extract_add(path_wave)
+
+        for i in song_test.find(): print i
 
         da.close()
 
@@ -130,6 +132,34 @@ class Extraction:
         return b
 
 
+    def sliding_window(self,x,coeff):
+        new_array = []
+        if x.shape != (x.shape[0],):
+            xshape = x.shape
+            for i in x:
+                template = []
+                for j in arange(int(len(i)/coeff)):
+                    if(j!=0):
+                        template.append(float(npsum(i[j*coeff-coeff/2:(j+1)*coeff])/(coeff+coeff/2)))
+                    elif j == int(len(i)/coeff)-1:
+                        template.append(float(npsum(i[j*coeff-coeff/2:])/len(i[j*coeff-coeff/2:])))
+                    else:
+                        template.append(float(npsum(i[:(j+1)*coeff])/coeff))
+                new_array.append(template)
+        else:
+            xshape = (x.shape[0],1)
+            template = []
+            for j in arange(int(x.shape[0]/coeff)):
+                if(j!=0):
+                    template.append(float(npsum(x[j*coeff-coeff/2:(j+1)*coeff])/(coeff+coeff/2)))
+                elif j == int(x.shape[0]/coeff)-1:
+                    template.append(float(npsum(x[j*coeff-coeff/2:])/len(x[j*coeff-coeff/2:])))
+                else:
+                    template.append(float(npsum(x[:(j+1)*coeff])/coeff))
+            new_array = template
+
+        return new_array, xshape
+
 
     def extract_features(self,x,para):
         """ Extract all features and reducing them invoking the wind function.
@@ -155,17 +185,19 @@ class Extraction:
         # Convert the numpy arrays into binaries to store them in MongoDB
         for fe in fea_dic:
             if 'Chromagram' in fe:
-                 fea_dic1.update({fe:Binary(dumps(fea_dic[fe].CHROMA, protocol=2))})
-            elif fe == 'MelFrequencyCepstrum (MFCC)':
-                 fea_dic1.update({fe:Binary(dumps(fea_dic[fe].MFCC, protocol=2))})
-            elif 'LinearFrequencySpectrum' in fe: 
-                fea_dic1.update({fe:Binary(dumps(fea_dic[fe].STFT, protocol=2))})
+                d,s = self.sliding_window(fea_dic[fe].CHROMA,16)
+            elif fe == 'MelFrequencyCepstrum':
+                d,s = self.sliding_window(fea_dic[fe].MFCC,16)
+            elif 'LinearFrequencySpectrum' in fe:
+                d,s = self.sliding_window(fea_dic[fe].STFT,16)
             elif fe == 'LinearPower' or fe == 'RMS' or fe == 'dBPower':
-                fea_dic1.update({fe:Binary(dumps(fea_dic[fe].POWER, protocol=2))})
+                d,s = self.sliding_window(fea_dic[fe].POWER,16)
             elif fe == 'BPM':
-                fea_dic1.update({fe:fea_dic[fe]})
+                d = fea_dic[fe]
+                s = (0,0)
             else:
-                fea_dic1.update({fe:Binary(dumps(fea_dic[fe].CQFT, protocol=2))})
+                d,s = self.sliding_window(fea_dic[fe].CQFT,16)
+            fea_dic1.update({fe:{"data":d,"row":s[0],"column":s[1],"parameters":para[fe]}})
         return fea_dic1
 
     def parameter_name(self,features_diction):
@@ -183,9 +215,9 @@ class Extraction:
                     else:
                         b += p +'-'+ str(a[p]) + ', '
                 if ii > 0:
-                    mdbfeat[feat1].update({b[0:len(b)-2]:features_diction[ii][feat1]})
+                    mdbfeat[feat1].append({b[0:len(b)-2]:features_diction[ii][feat1]})
                 else:
-                    mdbfeat.update({feat1:{b[0:len(b)-2]:features_diction[ii][feat1]}})
+                    mdbfeat.update({feat1:[{b[0:len(b)-2]:features_diction[ii][feat1]}]})
             ii += 1
         return mdbfeat
 
@@ -218,27 +250,33 @@ class Extraction:
 
                     dbfeat = self.parameter_name(features_dict)
 
-                    try:
-                        yea = meta[4][0:len(meta[4])-4]
-                        gen = meta[3]
-                    except:
-                        yea = None
-                        gen = meta[3][0:len(meta[3])-4]
-                    try:
+                    if len(meta) == 4:
                         tit = meta[0]
-                    except:
-                        tit = None
-                    try:
                         art = meta[1]
-                    except:
-                        art = None
-                    try:
                         alb = meta[2]
-                    except:
-                        alb = None
+                        gen = meta[3][:len(meta[3])-4]
+                        yea = None
+                    elif len(meta) == 5:
+                        tit = meta[0]
+                        art = meta[1]
+                        alb = meta[2]
+                        gen = meta[3]
+                        yea = meta[4][:len(meta[4])-4]
+                    elif len(meta) == 1:
+                        tit = meta[0][:len(meta[0])-4]
+                        art, alb, gen, yea = None, None, None, None
+                    elif len(meta) == 2:
+                        tit = meta[0]
+                        art = meta[1][:len(meta[1])-4]
+                        alb, gen, yea = None, None, None
+                    elif len(meta) == 3:
+                        tit = meta[0]
+                        art = meta[1]
+                        alb = meta[2][:len(meta[2])-4]
+                        gen, yea = None, None
 
                     self.so.insert({
-                        'id':i,
+                        'song_id':i,
                         'metadata': {
                         'title':tit,
                         'artist':art,
