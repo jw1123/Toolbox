@@ -200,6 +200,43 @@ class Extraction:
             fea_dic1.update({fe:{"data":d,"row":s[0],"column":s[1],"parameters":para[fe]}})
         return fea_dic1
 
+
+    def parameter_short(self,a):
+        b = ''
+        for p in a:
+            if p == "default" or "":
+                b = "default"
+            else:
+                if p == "sample_rate":
+                    b += "s" + str(a[p])[:len(str(a[p]))-3]
+                elif p == "nbpo":
+                    b += "nb" + str(a[p])
+                elif p == "ncoef":
+                    b += "nc" + str(a[p])
+                elif p == "lcoef":
+                    b += "lc" + str(a[p])
+                elif p == "lo":
+                    b += "lo" + str(a[p])
+                elif p == "hi":
+                    b += "hi" + str(a[p])[:len(str(a[p]))-3]
+                elif p == "nfft":
+                    b += "nf" + str(a[p])
+                elif p == "wfft":
+                    b += "w" + str(a[p])
+                elif p == "nhop":
+                    b += "nh" + str(a[p])
+                elif p == "log10":
+                    b += "l10" + str(a[p])[0]
+                elif p == "magnitude":
+                    b += "m" + str(a[p])[0]
+                elif p == "intensity":
+                    b += "i" + str(a[p])[0]
+                elif p == "onsets":
+                    b += "o" + str(a[p])[0]
+                else:
+                    b += "v" + str(a[p])
+        return b
+
     def parameter_name(self,features_diction):
         mdbfeat = {}
         ii = 0
@@ -207,17 +244,12 @@ class Extraction:
             a = None
             # Convert parameters into a name, to classify the extracted features
             for feat1 in self.features:
-                b = ''
                 a = par[feat1]
-                for p in a:
-                    if p == "default" or "":
-                        b = "default  "
-                    else:
-                        b += p +'-'+ str(a[p]) + ', '
+                b = self.parameter_short(a)
                 if ii > 0:
-                    mdbfeat[feat1].append({b[0:len(b)-2]:features_diction[ii][feat1]})
+                    mdbfeat[feat1].append({b:features_diction[ii][feat1]})
                 else:
-                    mdbfeat.update({feat1:[{b[0:len(b)-2]:features_diction[ii][feat1]}]})
+                    mdbfeat.update({feat1:[{b:features_diction[ii][feat1]}]})
             ii += 1
         return mdbfeat
 

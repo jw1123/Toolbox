@@ -23,11 +23,14 @@ class Distance:
         #__________________________________________________________________________
         self.so = song_test
         self.di = distance_feat
+        self.iterating()
+
+        for d in distance_feat.find(): print d§
 
 
     def iterating(self):
-        s = self.so.find(timeout=False).sort("id")
-        r = self.so.find(timeout=False).sort("id")
+        s = self.so.find(timeout=False).sort("song_id")
+        r = self.so.find(timeout=False).sort("song_id")
         ski = 1
         j = 1
         for song1 in s:
@@ -39,12 +42,8 @@ class Distance:
                 for i in song1['features']:
                     jii = 0
                     for h in song1['features'][i][0]:
-                        if type(song1['features'][i][0][h]) == float:
-                            a = song1['features'][i][0][h]
-                            b = song2['features'][i][0][h]
-                        else:
-                            a = ploads(song1['features'][i][0][h])
-                            b = ploads(song2['features'][i][0][h])
+                        a = song1['features'][i][0][h]['data']
+                        b = song2['features'][i][0][h]['data']
                         dd = self.dist(a,b)/l
                         if jii == 0:
                             distance_dict.update({i:{h:dd}})
@@ -66,9 +65,11 @@ class Distance:
             r.rewind()
         print "Distance calculation successfully completed!"
 
-    def dist(self,p,q):
+    def dist(self,x,y):
         # Determine which list is longer and invoking the reshaping function
         # to even their length (otherwise we cannot compare their values)
+        p = array(x)
+        q = array(y)
 
         if type(p) == float and type(q) == float:
             return abs(p-q)
