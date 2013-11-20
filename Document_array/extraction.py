@@ -13,7 +13,7 @@ from numpy import sum as npsum
 from subprocess import call
 from pymongo import Connection
 from aubio import tempo, source
-#from numpy.lib.stride_tricks import as_strided as ast
+from ConfigParser import ConfigParser
 
 class Extraction:
 
@@ -27,7 +27,6 @@ class Extraction:
         'LowQuefrencyMelSpectrum':LowQuefrencyMelSpectrum,'MelFrequencyCepstrum':MelFrequencyCepstrum,'MelFrequencySpectrumCentroid':MelFrequencySpectrumCentroid,\
         'MelFrequencySpectrumSpread':MelFrequencySpectrumSpread,'RMS':RMS,'dBPower':dBPower,'BPM':'BPM' } #replace BPM!!!!!!!
 
-        self.parameters_list, self.features = [], []
 
         try:
             con = Connection()
@@ -45,40 +44,27 @@ class Extraction:
         path_data = path.dirname(path.realpath("data.txt")) + "/data.txt"
         path_wave = path_w #replace with path to wave files #######REPLACE#######
         #_________________________________________________________________
-        da = open(path_data,'r')
 
-        for lin in da:
-            li = lin.split("--")
-            li[len(li)-1] = li[len(li)-1].replace("\n",'')
-            if li[0] == "Features":
-                self.features = li[1:]
-            elif li[0] == "Parameters":
-                parameters = {}
-                iii = 0
-                for l in li[1:]:
-                    if l == 'skip':
-                        parameters.update({self.features[iii]:{"default":""}})
-                    else:
-                        param_dic = {}
-                        par = l.split("-")
-                        for p in par:
-                            val = p.split(":")
-                            # Store parameter name and value as a dictionary
-                            param_dic.update({val[0]:int(val[1])})
-                        # Store the dictionary in a dictionary (one update = one feature)
-                        parameters.update({self.features[iii]:param_dic})
-                    iii += 1
-                # In case there are several parameter-runs, append the parameters into a list (one append = one run, for the same features)
-                self.parameters_list.append(parameters)
+        config = ConfigParser()
+        config.read(path_data)
+        feat_dic = {}
+        for feat in config.sections():
+            i = 0
+            for param in config.options(feat):
+                if i == 0:
+                    feat_dic.update({feat:{param:int(config.get(feat,param))}})
+                else:
+                    feat_dic[feat].update({param:int(config.get(feat,param))})
+                i += 1
+
+        self.features = feat_dic
 
         if y == "new":
             self.extract_new(path_wave)
         elif y == "add":
             self.extract_add(path_wave)
 
-        for i in song_test.find(): print i
-
-        da.close()
+        for i in song_test.find().limit(5): print i
 
 
     def BPM(self,path,param):
@@ -161,7 +147,7 @@ class Extraction:
         return new_array, xshape
 
 
-    def extract_features(self,x,para):
+    def extract_features(self,x):
         """ Extract all features and reducing them invoking the wind function.
             x: path to the file
             para: list of parameter dictionaries
@@ -171,14 +157,14 @@ class Extraction:
         # Recognize the features and launch their respective functions
         for f in self.features:
             if f != 'BPM':
-                if para[f] != {"default":""}:
+                if self.features[f] != {"default":0}:
                     # **para[i] gets the parameter dictionary and uses it as an argument for the bregman functions
-                    fea_dic.update({f:self.features_list[f](x,**para[f])})
+                    fea_dic.update({f:self.features_list[f](x,**self.features[f])})
                 else:
                     # Extraction with default values
                     fea_dic.update({f:self.features_list[f](x)})
             else:
-                fea_dic.update({f:self.BPM(x,para[f])})
+                fea_dic.update({f:self.BPM(x,self.features[f])})
 
 
         fea_dic1 = {}
@@ -197,7 +183,7 @@ class Extraction:
                 s = (0,0)
             else:
                 d,s = self.sliding_window(fea_dic[fe].CQFT,16)
-            fea_dic1.update({fe:{"data":d,"row":s[0],"column":s[1],"parameters":para[fe]}})
+            fea_dic1.update({fe:{"data":d,"row":s[0],"column":s[1],"parameters":self.features[fe]}})
         return fea_dic1
 
 
@@ -240,17 +226,15 @@ class Extraction:
     def parameter_name(self,features_diction):
         mdbfeat = {}
         ii = 0
-        for par in self.parameters_list:
+        for feat in self.features:
             a = None
             # Convert parameters into a name, to classify the extracted features
-            for feat1 in self.features:
-                a = par[feat1]
-                b = self.parameter_short(a)
-                if ii > 0:
-                    mdbfeat[feat1].append({b:features_diction[ii][feat1]})
-                else:
-                    mdbfeat.update({feat1:[{b:features_diction[ii][feat1]}]})
-            ii += 1
+            b = self.parameter_short(self.features[feat])
+            if ii > 0:
+                mdbfeat[feat].append({b:features_diction[ii][feat]})
+            else:
+                mdbfeat.update({feat:[{b:features_diction[ii][feat]}]})
+        ii += 1
         return mdbfeat
 
 
@@ -276,9 +260,7 @@ class Extraction:
                     features_dict = {}
                     ii = 0
 
-                    for x in self.parameters_list:
-                        features_dict.update({ii:self.extract_features(direc+file1,x)})
-                        ii += 1
+                    features_dict.update({ii:self.extract_features(direc+file1)})
 
                     dbfeat = self.parameter_name(features_dict)
 
@@ -294,18 +276,18 @@ class Extraction:
                         alb = meta[2]
                         gen = meta[3]
                         yea = meta[4][:len(meta[4])-4]
-                    elif len(meta) == 1:
-                        tit = meta[0][:len(meta[0])-4]
-                        art, alb, gen, yea = None, None, None, None
-                    elif len(meta) == 2:
-                        tit = meta[0]
-                        art = meta[1][:len(meta[1])-4]
-                        alb, gen, yea = None, None, None
-                    elif len(meta) == 3:
-                        tit = meta[0]
-                        art = meta[1]
-                        alb = meta[2][:len(meta[2])-4]
-                        gen, yea = None, None
+                    # elif len(meta) == 1:
+                    #     tit = meta[0][:len(meta[0])-4]
+                    #     art, alb, gen, yea = None, None, None, None
+                    # elif len(meta) == 2:
+                    #     tit = meta[0]
+                    #     art = meta[1][:len(meta[1])-4]
+                    #     alb, gen, yea = None, None, None
+                    # elif len(meta) == 3:
+                    #     tit = meta[0]
+                    #     art = meta[1]
+                    #     alb = meta[2][:len(meta[2])-4]
+                    #     gen, yea = None, None
 
                     self.so.insert({
                         'song_id':i,
@@ -329,27 +311,23 @@ class Extraction:
 
     def extract_add(self,direc):
         song_feature_dic = {}
-
+        j = 0
         for root,dirs,files in os.walk(direc):
             for file1 in files:
                 if file1[len(file1)-3:] == "wav":
+                    j += 1
                     features_dict = {}
                     ii = 0
-                    for x in self.parameters_list:
-                        features_dict.update({ii:self.extract_features(direc+file1,x)})
-                        ii += 1
+                    features_dict.update({ii:self.extract_features(direc+file1)})
                     dbfeat = self.parameter_name(features_dict)
                     meta = file1.split("-*-")
                     song_feature_dic.update({meta[0]+meta[1]+meta[2]:dbfeat})
-                    print "*"
-
-        s = self.so.find()
-        for song in s:
-            x = song_feature_dic[(song["metadata"]["title"]+song["metadata"]["artist"]+song["metadata"]["album"]).encode('utf-8')]
-            for i in x:
-                a = "features."+i
-                self.so.update({"metadata.title":song["metadata"]["title"],"metadata.artist":song["metadata"]["artist"],\
-                    "metadata.album":song["metadata"]["album"]},{"$addToSet":{a:x[i]}})
+                    for i in dbfeat:
+                        for par in dbfeat[i][0]:
+                            a = "features."+i
+                            self.so.update({"metadata.title":meta[0],"metadata.artist":meta[1],\
+                            "metadata.album":meta[2]},{"$addToSet":{a:{par:dbfeat[i][0][par]}}})
+                    print j
 
         print "Extraction successfully completed!"
 

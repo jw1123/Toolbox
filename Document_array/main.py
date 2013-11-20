@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from conversion import Conversion
-from extraction import Extraction
-from distance import Distance
-from neighbour import Neighbour
+
 from sys import argv
 from timeit import timeit
 from getopt import getopt
@@ -17,12 +14,16 @@ if __name__ == "__main__":
     
     for opt,arg in options:
         if opt in ('-c','--conversion'):
+            from conversion import Conversion
             c = Conversion(arg,rem[0])
         elif opt in ('-e','--extraction'):
+            from extraction import Extraction
             e = Extraction(arg,rem[0])
         elif opt in ('-d','--distance'):
+            from distance import Distance
             d = Distance()
         elif opt in ('-n','--neighbour'):
+            from neighbour import Neighbour
     	    n = Neighbour()
         elif opt in ('-h','--help'):
             print """The following options are available:
