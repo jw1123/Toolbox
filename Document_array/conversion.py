@@ -3,12 +3,13 @@
 
 from os import walk
 from mutagen.id3 import ID3
+from mutagen.mp4 import MP4
 from subprocess import call, STDOUT, PIPE
 
 
 class Conversion():
 
-    def __init__(self, a, path):
+    def __init__(self, path):
 
         print "CONVERSION"
 
@@ -18,57 +19,48 @@ class Conversion():
         output_path = path + "wave/"  # Change the output path # ###REPLACE###
         #____________________________________________________
 
-        if a == "mp3":
-            self.mp3_to_wave(input_path, output_path)
-        elif a == "m4a":
-            self.m4a_to_mp3(input_path, output_path)
+        self.any_to_wave(input_path, output_path)
 
-    def m4a_to_mp3(self, inp, out):
+    def any_to_wave(self, inp, out):
         for root, dirs, files in walk(inp):
             for fil in files:
-                if fil[len(fil)-3:len(fil)] == "m4a":
-                    try:
-                        call(["ffmpeg", "-i", inp + fil,
-                            out+fil[0:len(fil)-3] + "mp3"])
-                    except:
-                        print "%r could not be converted." % (fil)
-        print "Conversion successfully completed!"
+                end = fil[len(fil)-3:len(fil)]
+                if end in ["mp3","mp4","mp4"]:
+                    if end == "mp3":
+                        tag = ID3(inp + fil)
+                    elif end == "mp4" or end == "m4a":
+                        mp4 = MP4(inp + fil)
+                        tag = mp4.MP4Tags
 
-    def mp3_to_wave(self, inp, out):
-        for root, dirs, files in walk(inp):
-            for fil in files:
-                if fil[len(fil)-3:len(fil)] == "mp3":
-                    a = 0
-                    tag = ID3(inp + fil)
-                    # Testing if there is a year-tag, to avoid error due to
-                    # incorrect key value
-                    try:
-                        b = tag["TDRC"]
-                        a = 1
-                    except:
-                        a = 0
-                    # MP3 files are converted to WAVE files by invoking
-                    # ffmpeg in the terminal
-                    # As file name, ID3 tags are used in the following way:
-                    # Title -*- Artist -*- Album -*- Genre (-*- Year)
-                    try:
-                        if a == 1:
-                            call(["ffmpeg", "-i", inp + fil, "-ar", "11000",
-                                out + str(tag["TIT2"])
-                                + "-*-" + str(tag["TPE1"])
-                                + "-*-" + str(tag["TALB"])
-                                + "-*-" + str(tag["TCON"])
-                                + "-*-" + str(tag["TDRC"])
-                                + ".wav"],
-                                stderr=STDOUT, stdout=PIPE)
-                        else:
-                            call(["ffmpeg", "-i", inp + fil, "-ar", "11000",
-                                out + str(tag["TIT2"])
-                                + "-*-" + str(tag["TPE1"])
-                                + "-*-" + str(tag["TALB"])
-                                + "-*-" + str(tag["TCON"])
-                                + ".wav"],
-                                stderr=STDOUT, stdout=PIPE)
-                    except:
-                        print "%r could not be converted" % (fil)
+                    if "TIT2" in tag:
+                        titel = str(tag["TIT2"])
+                    else:
+                        titel = ''
+                    if "TPE1" in tag:
+                        artist = str(tag["TIT2"])
+                    else:
+                        artist = ''
+                    if "TALB" in tag:
+                        album = str(tag["TALB"])
+                    else:
+                        album = ''
+                    if "TCON" in tag:
+                        genre = str(tag["TCON"])
+                    else:
+                        genre = ''
+                    if "TDRC" in tag:
+                        year = str(tag["TDRC"])
+                    else:
+                        year = ''
+                    call(["ffmpeg", "-i", inp + fil, "-ar", "11000",
+                        out + titel
+                        + "-*-" + artist
+                        + "-*-" + album
+                        + "-*-" + genre
+                        + "-*-" + year
+                        + ".wav"],
+                        stderr=STDOUT, stdout=PIPE)
+
+
+
         print "Conversion successfully completed!"

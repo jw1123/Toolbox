@@ -266,18 +266,18 @@ class Extraction:
 
                     dbfeat = self.parameter_name(self.extract_features(direc+file1))
 
-                    if len(meta) == 4:
-                        tit = meta[0]
-                        art = meta[1]
-                        alb = meta[2]
-                        gen = meta[3][:len(meta[3])-4]
-                        yea = ''
-                    elif len(meta) == 5:
+                    if len(meta) == 5:
                         tit = meta[0]
                         art = meta[1]
                         alb = meta[2]
                         gen = meta[3]
                         yea = meta[4][:len(meta[4])-4]
+                    elif len(meta) == 4:
+                        tit = meta[0]
+                        art = meta[1]
+                        alb = meta[2]
+                        gen = meta[3][:len(meta[3])-4]
+                        yea = ''
                     # elif len(meta) == 1:
                     #     tit = meta[0][:len(meta[0])-4]
                     #     art, alb, gen, yea = '', '', '', ''

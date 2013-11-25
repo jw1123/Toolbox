@@ -29,20 +29,24 @@ class Distance:
         for song1 in s:
             r.skip(ski)
             for song2 in r:
-                distance_dict, weight = self.parse_features(song1, song2, coeff)
-                self.di.insert({
-                    'distance_id': j,
-                    'source': [song1['song_id'], song1['metadata']['title']],
-                    'target': [song2['song_id'], song2['metadata']['title']],
-                    'feature_distance': distance_dict,
-                    'weight': weight})
-                print j
-                j += 1
+                if song1['features'].sort() == song2['features'].sort():
+                    distance_dict, weight = self.browse_features(song1, song2, coeff)
+                    self.di.insert({
+                        'distance_id': j,
+                        'source': [song1['song_id'], song1['metadata']['title']],
+                        'target': [song2['song_id'], song2['metadata']['title']],
+                        'feature_distance': distance_dict,
+                        'weight': weight})
+                    print j
+                    j += 1
+                else:
+                    print "Songs need to have the same features"
+                    print song1['metadata']['title'], " and ", song2['metadata']['title'], " do not match."
             ski += 1
             r.rewind()
         print "Distance calculation successfully completed!"
 
-    def parse_features(self, song1, song2, coeff):
+    def browse_features(self, song1, song2, coeff):
         distance_dict = {}
         summe, dd, ddd, ii = 0, 0, 0, 0
         l = max(song1['metadata']['length'],
